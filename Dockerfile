@@ -1,47 +1,35 @@
-# Multi-stage build for optimalisering
-FROM maven:3.9.4-eclipse-temurin-17 AS builder
-
-# Sett arbeidsmappe
-WORKDIR /app
-
-# Kopier Maven filer først (for caching)
-COPY pom.xml .
-COPY src ./src
-
-# Bygg applikasjonen
-RUN mvn clean package -DskipTests -Dspring.profiles.active=prod
-
-# Production stage
+# Use official OpenJDK runtime with Alpine Linux
 FROM eclipse-temurin:17-jre-alpine
 
-# Installer curl for health checks
+# Install curl for health checks
 RUN apk add --no-cache curl
 
-# Opprett non-root bruker for sikkerhet
-RUN addgroup -g 1001 -S appuser && \
-    adduser -u 1001 -S appuser -G appuser
-
-# Arbeidsmappe
+# Create application directory
 WORKDIR /app
 
-# Kopier JAR fra builder stage
-COPY --from=builder /app/target/spss-viewer-*.jar app.jar
+# Copy the built JAR file (assuming Maven build creates this)
+COPY target/spss-viewer-*.jar app.jar
 
-# Sett rettigheter
-RUN chown appuser:appuser app.jar
+# Create non-root user for security
+RUN addgroup -S appuser && adduser -S appuser -G appuser
+RUN chown -R appuser:appuser /app
 
-# Bytt til non-root bruker
+# Switch to non-root user
 USER appuser
 
-# Eksponér port
+# Expose port
 EXPOSE 8080
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD curl -f http://localhost:8080/actuator/health || exit 1
+    CMD curl -f http://localhost:8080/actuator/health || exit 1
 
-# JVM optimalisering for container
-ENV JAVA_OPTS="-Xmx512m -Xms256m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -Dspring.profiles.active=prod"
-
-# Start applikasjon
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
+# Start the application
+ENTRYPOINT ["java", \
+    "-Djava.security.egd=file:/dev/./urandom", \
+    "-Dspring.profiles.active=prod", \
+    "-Xmx512m", \
+    "-Xms256m", \
+    "-XX:+UseG1GC", \
+    "-jar", \
+    "app.jar"]
