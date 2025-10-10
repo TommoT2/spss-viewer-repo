@@ -1,0 +1,48 @@
+server:
+  port: ${PORT:8080}
+  servlet:
+    context-path: /
+
+spring:
+  application:
+    name: spss-parser-api
+  profiles:
+    active: prod
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+      enabled: true
+  jackson:
+    pretty-print: true
+    default-property-inclusion: NON_NULL
+
+logging:
+  level:
+    com.spss.parser: INFO
+    org.springframework.web: INFO
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+cors:
+  allowed-origins: "*"
+  allowed-methods: "GET,POST,PUT,DELETE,OPTIONS"
+  allowed-headers: "*"
+
+---
+spring:
+  profiles: development
+  
+logging:
+  level:
+    com.spss.parser: DEBUG
+    org.springframework.web: DEBUG
+
+---
+spring:
+  profiles: production
+  
+logging:
+  level:
+    com.spss.parser: WARN
+    org.springframework.web: WARN
