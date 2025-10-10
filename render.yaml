@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: spss-parser-api
+    env: docker
+    dockerfilePath: ./Dockerfile
+    repo: https://github.com/TommoT2/spss-viewer-repo
+    branch: main
+    region: frankfurt
+    plan: free
+    buildCommand: docker build -t spss-parser .
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: PORT
+        value: 8080
+      - key: JAVA_OPTS
+        value: "-Xmx512m -Xms256m -XX:+UseG1GC"
+    scaling:
+      minInstances: 0
+      maxInstances: 1
