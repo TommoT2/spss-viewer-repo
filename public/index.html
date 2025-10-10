@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPSS Viewer - Parse .sav filer online</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔍 SPSS Viewer</h1>
+            <p>Parse SPSS .sav filer til JSON format</p>
+        </header>
+
+        <main>
+            <!-- API Configuration -->
+            <section class="config-section">
+                <h2>API Konfigurasjon</h2>
+                <div class="config-form">
+                    <label for="apiUrl">API Server URL:</label>
+                    <input type="url" id="apiUrl" placeholder="https://din-api-server.com/api" 
+                           value="http://localhost:8080/api">
+                    <button onclick="testConnection()">Test Tilkobling</button>
+                    <div id="connectionStatus"></div>
+                </div>
+            </section>
+
+            <!-- File Upload -->
+            <section class="upload-section">
+                <h2>Last opp SPSS fil</h2>
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-content">
+                        <i class="upload-icon">📁</i>
+                        <p>Dra og slipp .sav fil her eller klikk for å velge</p>
+                        <input type="file" id="fileInput" accept=".sav" hidden>
+                        <button onclick="document.getElementById('fileInput').click()">
+                            Velg fil
+                        </button>
+                    </div>
+                </div>
+                <div id="fileInfo" class="file-info hidden"></div>
+            </section>
+
+            <!-- Progress -->
+            <section class="progress-section hidden" id="progressSection">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <p id="progressText">Prosesserer fil...</p>
+            </section>
+
+            <!-- Results -->
+            <section class="results-section hidden" id="resultsSection">
+                <h2>Resultater</h2>
+                <div class="results-controls">
+                    <button onclick="downloadJson()">📥 Last ned JSON</button>
+                    <button onclick="downloadCsv()">📊 Last ned CSV</button>
+                    <button onclick="copyToClipboard()">📋 Kopier JSON</button>
+                </div>
+                
+                <!-- Metadata -->
+                <div class="result-card">
+                    <h3>Metadata</h3>
+                    <div id="metadataContent"></div>
+                </div>
+                
+                <!-- Variables -->
+                <div class="result-card">
+                    <h3>Variabler</h3>
+                    <div id="variablesContent"></div>
+                </div>
+                
+                <!-- Data Preview -->
+                <div class="result-card">
+                    <h3>Data (første 10 rader)</h3>
+                    <div id="dataContent"></div>
+                </div>
+                
+                <!-- Raw JSON -->
+                <div class="result-card">
+                    <h3>Rå JSON</h3>
+                    <pre id="rawJsonContent"></pre>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>Laget med ❤️ for SPSS dataanalyse | 
+               <a href="https://github.com/TommoT2/spss-viewer-repo" target="_blank">GitHub</a>
+            </p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
