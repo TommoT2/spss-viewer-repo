@@ -1,0 +1,68 @@
+server:
+  port: ${PORT:8080}
+  servlet:
+    context-path: /
+  tomcat:
+    max-threads: 200
+    accept-count: 100
+    connection-timeout: 20000
+    max-connections: 8192
+
+spring:
+  profiles:
+    active: prod
+  application:
+    name: spss-parser-api
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+      enabled: true
+  jackson:
+    pretty-print: false  # Optimalisering for produksjon
+    default-property-inclusion: NON_NULL
+
+logging:
+  level:
+    com.spss.parser: INFO
+    org.springframework.web: WARN
+    org.springframework.boot: INFO
+    org.hibernate: WARN
+  pattern:
+    console: "%d{ISO8601} [%thread] %-5level %logger{36} - %msg%n"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,env
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+    info:
+      enabled: true
+    metrics:
+      enabled: true
+  health:
+    diskspace:
+      enabled: true
+    ping:
+      enabled: true
+
+# CORS Configuration for public API
+cors:
+  allowed-origins: "*"
+  allowed-methods: "GET,POST,PUT,DELETE,OPTIONS"
+  allowed-headers: "*"
+  allow-credentials: false
+
+# API Documentation
+springdoc:
+  api-docs:
+    enabled: true
+    path: /api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
