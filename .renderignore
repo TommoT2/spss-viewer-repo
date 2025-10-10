@@ -1,0 +1,37 @@
+# Files and directories to ignore during Render.com deployment
+
+# Test scripts
+test-*.sh
+*.test.sh
+test-*
+
+# GitHub specific files
+.github/
+.git/
+.gitignore
+
+# Documentation
+README.md
+*.md
+docs/
+
+# Development files
+*.log
+*.tmp
+*.temp
+.DS_Store
+.idea/
+.vscode/
+*.iml
+
+# Maven wrapper (if not needed)
+.mvn/
+mvnw
+mvnw.cmd
+
+# IDE files
+target/classes/
+*.class
+
+# OS files
+Thumbs.db
