@@ -1,6 +1,6 @@
 // Global variables
 let currentResult = null;
-let apiBaseUrl = 'http://localhost:8080/api';
+let apiBaseUrl = 'https://spss-parser-api.onrender.com/api'; // Updated for production
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
@@ -80,6 +80,9 @@ function loadSavedApiUrl() {
     if (savedUrl) {
         apiBaseUrl = savedUrl;
         document.getElementById('apiUrl').value = savedUrl;
+    } else {
+        // Set default to Render.com production URL
+        document.getElementById('apiUrl').value = 'https://spss-parser-api.onrender.com/api';
     }
 }
 
@@ -89,18 +92,29 @@ async function testConnection() {
     statusDiv.className = 'status-testing';
     
     try {
-        const response = await fetch(`${apiBaseUrl}/health`);
-        const data = await response.json();
+        const response = await fetch(`${apiBaseUrl}/health`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
         
         if (response.ok) {
-            statusDiv.innerHTML = '✅ Tilkobling vellykket';
+            const data = await response.json();
+            statusDiv.innerHTML = `✅ Tilkobling vellykket - ${data.service || 'SPSS Parser API'}`;
             statusDiv.className = 'status-success';
+            
+            // Show additional info if available
+            if (data.version) {
+                statusDiv.innerHTML += ` (v${data.version})`;
+            }
         } else {
-            throw new Error('Server svarte med feil');
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
     } catch (error) {
         statusDiv.innerHTML = '❌ Tilkobling feilet: ' + error.message;
         statusDiv.className = 'status-error';
+        console.error('Connection test failed:', error);
     }
 }
 
@@ -108,6 +122,12 @@ function processFile(file) {
     // Validate file
     if (!file.name.toLowerCase().endsWith('.sav')) {
         alert('Vennligst velg en .sav fil');
+        return;
+    }
+    
+    // Check file size (50MB limit)
+    if (file.size > 52428800) {
+        alert('Filen er for stor. Maksimal størrelse er 50MB.');
         return;
     }
     
@@ -140,7 +160,8 @@ async function uploadFile(file) {
         
         const response = await fetch(`${apiBaseUrl}/parse`, {
             method: 'POST',
-            body: formData
+            body: formData,
+            // Note: Don't set Content-Type header - let browser set it with boundary
         });
         
         updateProgress(50, 'Prosesserer fil...');
@@ -149,15 +170,16 @@ async function uploadFile(file) {
         
         updateProgress(90, 'Fullførerer...');
         
-        if (result.success) {
+        if (response.ok && result.success) {
             currentResult = JSON.parse(result.result);
-            showResults(currentResult, file.name);
+            showResults(currentResult, file.name, result);
             updateProgress(100, 'Ferdig!');
         } else {
-            throw new Error(result.error || 'Ukjent feil');
+            throw new Error(result.error || `HTTP ${response.status}: ${response.statusText}`);
         }
         
     } catch (error) {
+        console.error('Upload failed:', error);
         showError('Feil ved prosessering: ' + error.message);
     } finally {
         setTimeout(() => showProgress(false), 1000);
@@ -179,9 +201,20 @@ function updateProgress(percent, text) {
     document.getElementById('progressText').textContent = text;
 }
 
-function showResults(data, filename) {
+function showResults(data, filename, apiResponse) {
     // Show results section
     document.getElementById('resultsSection').classList.remove('hidden');
+    
+    // Add processing info if available
+    if (apiResponse && apiResponse.processingTimeMs) {
+        const processingInfo = document.createElement('div');
+        processingInfo.className = 'processing-info';
+        processingInfo.innerHTML = `
+            <p><strong>Prosesseringstid:</strong> ${apiResponse.processingTimeMs}ms</p>
+            <p><strong>Filstørrelse:</strong> ${formatFileSize(apiResponse.fileSize || 0)}</p>
+        `;
+        document.getElementById('resultsSection').insertBefore(processingInfo, document.getElementById('resultsSection').firstChild.nextSibling);
+    }
     
     // Show metadata
     showMetadata(data.metadata);
@@ -311,6 +344,16 @@ function copyToClipboard() {
     
     const jsonStr = JSON.stringify(currentResult, null, 2);
     navigator.clipboard.writeText(jsonStr).then(() => {
+        alert('JSON kopiert til utklippstavlen!');
+    }).catch(err => {
+        console.error('Failed to copy to clipboard:', err);
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = jsonStr;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
         alert('JSON kopiert til utklippstavlen!');
     });
 }
